@@ -267,6 +267,15 @@ select.fc option{background:var(--bg3);color:var(--text)}
   box-shadow:0 4px 16px rgba(245,146,10,.3);
 }
 .pw-btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(245,146,10,.4)}
+.pw-back{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  width:100%;margin-top:10px;padding:11px;
+  background:transparent;border:1.5px solid var(--border2);
+  color:var(--text-muted);border-radius:var(--r);
+  font-family:var(--font-head);font-size:.88rem;font-weight:600;
+  letter-spacing:.5px;cursor:pointer;transition:var(--tr);
+}
+.pw-back:hover{border-color:var(--border3);color:var(--text);background:var(--bg4)}
 .pw-err{color:var(--red);font-size:.83rem;margin-top:8px;min-height:18px}
 .pw-hint{
   margin-top:18px;padding:12px 14px;
@@ -674,6 +683,10 @@ select.fc option{background:var(--bg3);color:var(--text)}
       </div>
       <button class="pw-btn" onclick="authMap()">Acessar Mapa</button>
       <div class="pw-err" id="map-pw-err"></div>
+      <button class="pw-back" onclick="go(prevSection)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Voltar
+      </button>
     </div>
   </div>
   <div class="map-ui left hidden" id="map-left">
@@ -709,6 +722,10 @@ select.fc option{background:var(--bg3);color:var(--text)}
       </div>
       <button class="pw-btn" onclick="authRes()">Acessar Dashboard</button>
       <div class="pw-err" id="res-pw-err"></div>
+      <button class="pw-back" onclick="go(prevSection)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Voltar
+      </button>
     </div>
   </div>
 
@@ -806,6 +823,7 @@ let mapInst = null, mapReady = false, mapFilter = 'all', mapMks = []
 let selM = [new Date().getMonth() + 1]
 let resUnlocked = false
 const gpsOk = {}
+let prevSection = 'goiania'   // ← rastreia a última seção de formulário visitada
 
 // ── NAVIGATION ──
 function go(name) {
@@ -813,8 +831,8 @@ function go(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
   document.getElementById('sec-' + name).classList.add('active')
   document.querySelector(`[data-nav="${name}"]`).classList.add('active')
-  if (name === 'goiania')       getGPS('g')
-  if (name === 'metropolitana') getGPS('m')
+  if (name === 'goiania')       { prevSection = 'goiania';       getGPS('g') }
+  if (name === 'metropolitana') { prevSection = 'metropolitana'; getGPS('m') }
   if (name === 'mapa' && mapReady) setTimeout(() => mapInst && mapInst.invalidateSize(), 120)
   if (name === 'resumo') {
     if (!resUnlocked) {

@@ -386,6 +386,37 @@ select.fc option{background:var(--bg3);color:var(--text)}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.t-success{border-color:rgba(34,197,94,.5);color:var(--green)}
 .toast.t-error{border-color:rgba(239,68,68,.5);color:var(--red)}
+/* COMBOBOX PREFIXO */
+.combo-wrap{position:relative}
+.combo-input{
+  width:100%;background:var(--bg3);border:1.5px solid var(--border);
+  color:var(--text);font-family:var(--font-body);font-size:clamp(.87rem,2vw,.95rem);
+  padding:clamp(9px,1.5vw,11px) 36px clamp(9px,1.5vw,11px) 13px;
+  border-radius:var(--r);transition:var(--tr);min-height:44px;
+}
+.combo-input:focus{outline:none;border-color:var(--accent);background:var(--bg4);box-shadow:0 0 0 3px var(--accent-glow)}
+.combo-input::placeholder{color:var(--text-dim)}
+.combo-arrow{
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  pointer-events:none;color:var(--text-muted);
+}
+.combo-list{
+  position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:300;
+  background:var(--bg3);border:1.5px solid var(--border2);
+  border-radius:var(--r);overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+  max-height:220px;overflow-y:auto;display:none;
+}
+.combo-list.open{display:block}
+.combo-item{
+  padding:10px 14px;cursor:pointer;font-size:.9rem;
+  font-family:'Courier New',monospace;font-weight:600;color:var(--text2);
+  transition:background .12s;border-bottom:1px solid var(--border);
+}
+.combo-item:last-child{border-bottom:none}
+.combo-item:hover,.combo-item.active{background:var(--accent-glow2);color:var(--accent)}
+.combo-item mark{background:none;color:var(--accent);font-weight:800}
+.combo-empty{padding:12px 14px;color:var(--text-dim);font-size:.86rem;font-style:italic}
 .hidden{display:none!important}
 </style>
 </head>
@@ -418,8 +449,14 @@ select.fc option{background:var(--bg3);color:var(--text)}
       <div class="card-title">Identificação</div>
       <div class="frow">
         <div class="fg">
-          <label class="flabel" for="g-pref">Prefixo <span class="req">*</span></label>
-          <select class="fc" id="g-pref"></select>
+          <label class="flabel" for="g-pref-in">Prefixo <span class="req">*</span></label>
+          <div class="combo-wrap" id="g-combo">
+            <input type="text" class="combo-input" id="g-pref-in" placeholder="Digite ou selecione..." autocomplete="off"
+                   oninput="filterCombo('g')" onfocus="openCombo('g')" onblur="closeCombo('g')" onkeydown="navCombo(event,'g')">
+            <svg class="combo-arrow" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="#7a8fc0" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+            <div class="combo-list" id="g-combo-list"></div>
+            <input type="hidden" id="g-pref" value="">
+          </div>
         </div>
         <div class="fg">
           <label class="flabel" for="g-data">Data <span class="req">*</span></label>
@@ -522,8 +559,14 @@ select.fc option{background:var(--bg3);color:var(--text)}
       <div class="card-title">Identificação</div>
       <div class="frow">
         <div class="fg">
-          <label class="flabel" for="m-pref">Prefixo <span class="req">*</span></label>
-          <select class="fc" id="m-pref"></select>
+          <label class="flabel" for="m-pref-in">Prefixo <span class="req">*</span></label>
+          <div class="combo-wrap" id="m-combo">
+            <input type="text" class="combo-input" id="m-pref-in" placeholder="Digite ou selecione..." autocomplete="off"
+                   oninput="filterCombo('m')" onfocus="openCombo('m')" onblur="closeCombo('m')" onkeydown="navCombo(event,'m')">
+            <svg class="combo-arrow" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="#7a8fc0" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+            <div class="combo-list" id="m-combo-list"></div>
+            <input type="hidden" id="m-pref" value="">
+          </div>
         </div>
         <div class="fg">
           <label class="flabel" for="m-data">Data <span class="req">*</span></label>
@@ -783,14 +826,82 @@ function go(name) {
 
 // ── FORM BUILD ──
 function buildForm(p) {
-  const rn = p === 'g' ? 'goiania' : 'metropolitana'
-  const ps = document.getElementById(p + '-pref')
-  ps.innerHTML = '<option value="">Selecione...</option>' + PREFS[p].map(x => `<option>${x}</option>`).join('')
+  // Origens
   const os = document.getElementById(p + '-orig')
   os.innerHTML = '<option value="">Selecione...</option>' + ORIGS.map(x => `<option>${x}</option>`).join('')
   document.getElementById(p + '-data').value = td()
+  renderComboItems(p, '')  // populate full list
 }
 function td() { return new Date().toISOString().split('T')[0] }
+
+// ── COMBOBOX ──
+function renderComboItems(p, query) {
+  const list = document.getElementById(p + '-combo-list')
+  const q = query.trim().toLowerCase()
+  const matches = PREFS[p].filter(x => x.toLowerCase().includes(q))
+  if (matches.length === 0) {
+    list.innerHTML = '<div class="combo-empty">Nenhum prefixo encontrado</div>'
+    return
+  }
+  list.innerHTML = matches.map(x => {
+    const hi = q ? x.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m => `<mark>${m}</mark>`) : x
+    return `<div class="combo-item" data-val="${x}" onmousedown="selectCombo('${p}','${x}')">${hi}</div>`
+  }).join('')
+}
+
+function openCombo(p) {
+  renderComboItems(p, document.getElementById(p + '-pref-in').value)
+  document.getElementById(p + '-combo-list').classList.add('open')
+}
+
+function closeCombo(p) {
+  setTimeout(() => {
+    document.getElementById(p + '-combo-list').classList.remove('open')
+    // If typed text doesn't match a valid option, clear hidden value
+    const inp = document.getElementById(p + '-pref-in').value.trim().toUpperCase()
+    if (!PREFS[p].includes(inp)) {
+      document.getElementById(p + '-pref').value = ''
+      // don't clear input so user sees what they typed
+    }
+  }, 180)
+}
+
+function filterCombo(p) {
+  const q = document.getElementById(p + '-pref-in').value
+  document.getElementById(p + '-pref').value = ''  // clear selection until one is chosen
+  renderComboItems(p, q)
+  document.getElementById(p + '-combo-list').classList.add('open')
+}
+
+function selectCombo(p, val) {
+  document.getElementById(p + '-pref-in').value = val
+  document.getElementById(p + '-pref').value = val
+  document.getElementById(p + '-combo-list').classList.remove('open')
+}
+
+function navCombo(e, p) {
+  const list = document.getElementById(p + '-combo-list')
+  const items = list.querySelectorAll('.combo-item')
+  const active = list.querySelector('.combo-item.active')
+  let idx = Array.from(items).indexOf(active)
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    list.classList.add('open')
+    idx = Math.min(idx + 1, items.length - 1)
+    items.forEach((it,i) => it.classList.toggle('active', i === idx))
+    items[idx]?.scrollIntoView({ block:'nearest' })
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    idx = Math.max(idx - 1, 0)
+    items.forEach((it,i) => it.classList.toggle('active', i === idx))
+    items[idx]?.scrollIntoView({ block:'nearest' })
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    if (active) selectCombo(p, active.dataset.val)
+  } else if (e.key === 'Escape') {
+    list.classList.remove('open')
+  }
+}
 
 // ── GPS ──
 function getGPS(p) {
@@ -893,7 +1004,9 @@ async function sub(p) {
 }
 
 function resetF(p) {
-  ['pref','orig'].forEach(f => { document.getElementById(p + '-' + f).value = '' })
+  document.getElementById(p + '-orig').value = ''
+  document.getElementById(p + '-pref').value = ''
+  document.getElementById(p + '-pref-in').value = ''
   document.querySelectorAll(`input[name="${p}-ef"]`).forEach(r => r.checked = false)
   document.getElementById(p + '-ss').value = ''
   document.getElementById(p + '-ssbox').style.display = 'none'
@@ -931,7 +1044,7 @@ function authRes() {
 function initMap() {
   if (!mapInst) {
     mapInst = L.map('map').setView([-16.6869, -49.2648], 11)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution:'© CARTO', maxZoom:19 }).addTo(mapInst)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution:'© <a href="https://openstreetmap.org">OSM</a> © <a href="https://carto.com">CARTO</a>', maxZoom:19 }).addTo(mapInst)
   } else mapInst.invalidateSize()
   loadMarkers()
 }

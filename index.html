@@ -312,7 +312,7 @@ select.fc option{background:var(--bg3);color:var(--text)}
   padding:0!important;overflow:hidden;
 }
 .leaflet-popup-tip{background:var(--bg2)!important}
-.leaflet-popup-content{margin:0!important;width:auto!important;min-width:230px;max-width:290px}
+.leaflet-popup-content{margin:0!important;width:auto!important;min-width:240px;max-width:300px}
 .pop-inner{padding:14px}
 .pop-pfx{font-family:'Montserrat',sans-serif;font-size:1.05rem;font-weight:800;color:#fff;border-bottom:2px solid var(--accent);padding-bottom:7px;margin-bottom:8px}
 .pop-reg{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:9px}
@@ -322,8 +322,25 @@ select.fc option{background:var(--bg3);color:var(--text)}
 .pop-v{font-weight:600;color:#fff}
 .pop-yes{color:var(--green)}.pop-no{color:var(--red)}
 .pop-photos{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
-.pop-img{width:60px;height:60px;object-fit:cover;border-radius:7px;cursor:pointer;border:1.5px solid var(--border2);transition:border-color .15s}
+.pop-img{width:72px;height:72px;object-fit:cover;border-radius:7px;cursor:pointer;border:1.5px solid var(--border2);transition:border-color .15s}
 .pop-img:hover{border-color:var(--accent)}
+/* expandable section */
+.pop-extra{display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.pop-extra.open{display:block}
+.pop-coords{font-size:.72rem;color:var(--text-dim);font-family:'Courier New',monospace;margin-bottom:6px;word-break:break-all}
+.pop-origem-full{font-size:.8rem;color:var(--text2);margin-bottom:8px}
+.pop-outras{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.pop-expand-btn{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  width:100%;margin-top:10px;padding:7px;
+  background:rgba(245,146,10,.08);border:1px solid rgba(245,146,10,.25);
+  color:var(--accent);border-radius:7px;cursor:pointer;
+  font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+  font-family:'Montserrat',sans-serif;transition:background .15s;
+}
+.pop-expand-btn:hover{background:rgba(245,146,10,.16)}
+.pop-expand-btn svg{transition:transform .25s}
+.pop-expand-btn.open svg{transform:rotate(180deg)}
 
 /* RESUMO */
 .rw{max-width:920px;margin:0 auto;padding:clamp(14px,3vw,28px) clamp(12px,3vw,22px) 80px}
@@ -382,6 +399,47 @@ select.fc option{background:var(--bg3);color:var(--text)}
 .ri-empty{color:var(--text-dim);font-size:.83rem;padding:6px 0;font-style:italic}
 
 .sdivider{height:1px;background:var(--border);margin:clamp(18px,4vw,34px) 0}
+
+/* TEAM TABLE */
+.team-table-wrap{
+  margin-top:clamp(12px,2.5vw,18px);
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;
+}
+.team-table-title{
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:var(--text-muted);display:flex;align-items:center;gap:8px;
+}
+.team-table-scroll{overflow-x:auto}
+.team-tbl{
+  width:100%;border-collapse:collapse;font-size:clamp(.78rem,1.8vw,.88rem);
+  min-width:420px;
+}
+.team-tbl thead tr{background:var(--bg3)}
+.team-tbl th{
+  padding:10px 14px;text-align:left;
+  font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap;
+}
+.team-tbl th:not(:first-child){text-align:center}
+.team-tbl td{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  color:var(--text2);vertical-align:middle;
+}
+.team-tbl tr:last-child td{border-bottom:none}
+.team-tbl tbody tr:hover{background:rgba(255,255,255,.025)}
+.td-pfx{font-family:'Courier New',monospace;font-weight:700;color:var(--text);font-size:.85rem}
+.td-num,.td-ef,.td-nef,.td-pct{text-align:center;font-weight:600;font-family:var(--font-head)}
+.td-num{color:var(--blue)}
+.td-ef{color:var(--green)}
+.td-nef{color:var(--red)}
+.assert-badge{
+  display:inline-block;padding:3px 9px;border-radius:20px;
+  font-size:.78rem;font-weight:700;font-family:var(--font-head);
+}
+.assert-hi{ background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.4); color:var(--green)}
+.assert-mid{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:var(--yellow)}
+.assert-lo{ background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4); color:var(--red)}
 
 /* TOAST */
 .toast{
@@ -733,7 +791,7 @@ select.fc option{background:var(--bg3);color:var(--text)}
     <div class="page-header">
       <div class="ph-inner">
         <div class="ph-title">Dashboard <span>Resumo</span></div>
-        <div class="ph-sub">Visão consolidada por regional com rankings de equipes</div>
+        <div class="ph-sub">Visão consolidada por regional com rankings de equipes &nbsp;·&nbsp; <span id="res-filter-badge" style="color:var(--accent);font-weight:600"></span></div>
       </div>
     </div>
     <div class="rw">
@@ -746,7 +804,7 @@ select.fc option{background:var(--bg3);color:var(--text)}
       </div>
 
       <!-- Goiânia -->
-      <div class="reg-section">
+      <div class="reg-section" id="res-sec-g">
         <div class="reg-head">
           <span class="reg-chip ch-gyn">GYN</span>
           <span class="reg-name">Goiânia</span>
@@ -767,12 +825,19 @@ select.fc option{background:var(--bg3);color:var(--text)}
             <div id="rg-rpct"></div>
           </div>
         </div>
+        <div class="team-table-wrap">
+          <div class="team-table-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            Resumo completo — todas as equipes
+          </div>
+          <div class="team-table-scroll"><div id="rg-tbl"></div></div>
+        </div>
       </div>
 
-      <div class="sdivider"></div>
+      <div class="sdivider" id="res-divider"></div>
 
       <!-- Metropolitana -->
-      <div class="reg-section">
+      <div class="reg-section" id="res-sec-m">
         <div class="reg-head">
           <span class="reg-chip ch-metro">METRO</span>
           <span class="reg-name">Metropolitana</span>
@@ -792,6 +857,13 @@ select.fc option{background:var(--bg3);color:var(--text)}
             <div class="rc-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Top 3 — Assertividade</div>
             <div id="rm-rpct"></div>
           </div>
+        </div>
+        <div class="team-table-wrap">
+          <div class="team-table-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            Resumo completo — todas as equipes
+          </div>
+          <div class="team-table-scroll"><div id="rm-tbl"></div></div>
         </div>
       </div>
     </div>
@@ -821,7 +893,7 @@ const MDL   = ['🥇','🥈','🥉']
 
 let mapInst = null, mapReady = false, mapFilter = 'all', mapMks = []
 let selM = [new Date().getMonth() + 1]
-let resUnlocked = false
+let resUnlocked = false, resFilter = 'all'
 const gpsOk = {}
 let prevSection = 'goiania'   // ← rastreia a última seção de formulário visitada
 
@@ -836,6 +908,8 @@ function go(name) {
   if (name === 'mapa' && mapReady) setTimeout(() => mapInst && mapInst.invalidateSize(), 120)
   if (name === 'resumo') {
     if (!resUnlocked) {
+      document.getElementById('res-pw-in').value = ''
+      document.getElementById('res-pw-err').textContent = ''
       document.getElementById('res-pw').style.display = 'flex'
       document.getElementById('res-content').style.display = 'none'
     } else loadRes()
@@ -1051,10 +1125,20 @@ function authMap() {
 // ── RESUMO AUTH ──
 function authRes() {
   const pw = document.getElementById('res-pw-in').value.trim()
-  if (pw !== 'admin') { document.getElementById('res-pw-err').textContent = '✗ Senha incorreta'; return }
+  const err = document.getElementById('res-pw-err')
+  const map = { admin:'all', admingyn:'goiania', admmetro:'metropolitana' }
+  if (!map[pw]) { err.textContent = '✗ Senha incorreta'; return }
+  resFilter = map[pw]
   resUnlocked = true
   document.getElementById('res-pw').style.display = 'none'
   document.getElementById('res-content').style.display = 'block'
+
+  // Show/hide regional sections and badge based on filter
+  const lbls = { all:'Todas as Regiões', goiania:'Goiânia', metropolitana:'Metropolitana' }
+  document.getElementById('res-filter-badge').textContent = lbls[resFilter]
+  document.getElementById('res-sec-g').style.display = (resFilter === 'metropolitana') ? 'none' : 'block'
+  document.getElementById('res-sec-m').style.display = (resFilter === 'goiania')       ? 'none' : 'block'
+  document.getElementById('res-divider').style.display = (resFilter === 'all')         ? 'block' : 'none'
   loadRes()
 }
 
@@ -1082,8 +1166,49 @@ async function loadMarkers() {
     const bd = a.efetividade ? '#16a34a' : '#dc2626'
     const icon = L.divIcon({ html:`<div style="width:14px;height:14px;border-radius:50%;background:${cl};border:2.5px solid ${bd};box-shadow:0 0 8px ${cl}55"></div>`, className:'', iconSize:[14,14], iconAnchor:[7,7] })
     const dtf = (() => { try { return new Date(a.data+'T12:00:00').toLocaleDateString('pt-BR') } catch { return a.data } })()
-    const ft  = [a.foto_medidor,a.foto_fachada,a.foto_medicao_atual].filter(Boolean).map(u => `<img src="${u}" class="pop-img" onclick="window.open('${u}','_blank')">`).join('')
-    const pop = `<div class="pop-inner"><div class="pop-pfx">${a.prefixo}</div><div class="pop-reg">${a.regional==='goiania'?'Goiânia':'Metropolitana'}</div><div class="pop-row"><span class="pop-k">Data</span><span class="pop-v">${dtf}</span></div><div class="pop-row"><span class="pop-k">Origem</span><span class="pop-v">${a.origem}</span></div><div class="pop-row"><span class="pop-k">Efetivo</span><span class="pop-v ${a.efetividade?'pop-yes':'pop-no'}">${a.efetividade?'✓ SIM':'✗ NÃO'}</span></div>${a.numero_ss?`<div class="pop-row"><span class="pop-k">N° SS</span><span class="pop-v">${a.numero_ss}</span></div>`:''} ${ft?`<div class="pop-photos">${ft}</div>`:''}</div>`
+    const fotosSumario = [a.foto_medidor, a.foto_fachada]
+      .filter(Boolean)
+      .map(u => `<img src="${u}" class="pop-img" onclick="window.open('${u}','_blank')" title="Ampliar">`)
+      .join('')
+
+    const fotosExtra = [a.foto_medicao_atual, ...(Array.isArray(a.outras_fotos) ? a.outras_fotos : [])]
+      .filter(Boolean)
+      .map(u => `<img src="${u}" class="pop-img" onclick="window.open('${u}','_blank')" title="Ampliar">`)
+      .join('')
+
+    const coordsText = (a.latitude && a.longitude)
+      ? `${parseFloat(a.latitude).toFixed(6)}, ${parseFloat(a.longitude).toFixed(6)}`
+      : 'Não registrado'
+
+    const uid = 'pop_' + a.id.replace(/-/g,'').slice(0,8)
+
+    const pop = `
+      <div class="pop-inner">
+        <div class="pop-pfx">${a.prefixo}</div>
+        <div class="pop-reg">${a.regional === 'goiania' ? 'Goiânia' : 'Metropolitana'}</div>
+
+        <div class="pop-row"><span class="pop-k">Data</span><span class="pop-v">${dtf}</span></div>
+        <div class="pop-row"><span class="pop-k">Origem</span><span class="pop-v">${a.origem}</span></div>
+        <div class="pop-row"><span class="pop-k">Efetivo</span><span class="pop-v ${a.efetividade ? 'pop-yes' : 'pop-no'}">${a.efetividade ? '✓ SIM' : '✗ NÃO'}</span></div>
+        ${a.numero_ss ? `<div class="pop-row"><span class="pop-k">N° SS</span><span class="pop-v">${a.numero_ss}</span></div>` : ''}
+        ${fotosSumario ? `<div class="pop-photos">${fotosSumario}</div>` : ''}
+
+        <button class="pop-expand-btn" id="btn-${uid}" onclick="togglePopExtra('${uid}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          Ver detalhes completos
+        </button>
+
+        <div class="pop-extra" id="ex-${uid}">
+          <div class="pop-row"><span class="pop-k">Coordenadas</span></div>
+          <div class="pop-coords">${coordsText}</div>
+          ${fotosExtra ? `
+            <div class="pop-k" style="margin-bottom:6px">Fotos adicionais</div>
+            <div class="pop-outras">${fotosExtra}</div>` : ''}
+          <div style="margin-top:8px;font-size:.72rem;color:var(--text-dim)">
+            Registrado em ${new Date(a.created_at).toLocaleString('pt-BR')}
+          </div>
+        </div>
+      </div>`
     const mk = L.marker([lat,lng],{icon}).bindPopup(pop,{maxWidth:300}).addTo(mapInst)
     mapMks.push(mk); bnds.push([lat,lng])
   })
@@ -1123,8 +1248,8 @@ async function loadRes() {
   const { data, error } = await db.from('acoes').select('*')
   if (error) { toast('Erro ao carregar dados', 'error'); return }
   const flt = data.filter(a => { try { return selM.includes(new Date(a.data+'T12:00:00').getMonth()+1) } catch { return false } })
-  renderReg('g', flt.filter(a => a.regional==='goiania'))
-  renderReg('m', flt.filter(a => a.regional==='metropolitana'))
+  if (resFilter !== 'metropolitana') renderReg('g', flt.filter(a => a.regional==='goiania'))
+  if (resFilter !== 'goiania')       renderReg('m', flt.filter(a => a.regional==='metropolitana'))
 }
 
 function renderReg(p, rows) {
@@ -1147,6 +1272,40 @@ function renderReg(p, rows) {
 
   document.getElementById(id+'-rvol').innerHTML = rh(top3v, v=>v+' ações')
   document.getElementById(id+'-rpct').innerHTML = rh(top3a, v=>v.toFixed(1)+'%')
+
+  // ── Tabela completa de equipes ──
+  const allTeams = Object.entries(am).sort((a,b) => b[1].t - a[1].t)
+  const tblEl = document.getElementById(id+'-tbl')
+  if (allTeams.length === 0) {
+    tblEl.innerHTML = '<div class="ri-empty">Sem dados para o período selecionado</div>'
+    return
+  }
+  tblEl.innerHTML = `
+    <table class="team-tbl">
+      <thead>
+        <tr>
+          <th>Prefixo</th>
+          <th>Total</th>
+          <th>Efetivas</th>
+          <th>Não Efetivas</th>
+          <th>Assertividade</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${allTeams.map(([pr,v]) => {
+          const ap = v.t > 0 ? (v.e/v.t*100).toFixed(1) : '0.0'
+          const apNum = parseFloat(ap)
+          const apClass = apNum >= 70 ? 'assert-hi' : apNum >= 40 ? 'assert-mid' : 'assert-lo'
+          return `<tr>
+            <td class="td-pfx">${pr}</td>
+            <td class="td-num">${v.t}</td>
+            <td class="td-ef">${v.e}</td>
+            <td class="td-nef">${v.t - v.e}</td>
+            <td class="td-pct"><span class="assert-badge ${apClass}">${ap}%</span></td>
+          </tr>`
+        }).join('')}
+      </tbody>
+    </table>`
 }
 
 // ── SHOW/HIDE PASSWORD ──
@@ -1160,6 +1319,17 @@ function togPw(inputId, btn) {
     ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
     : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
   inp.focus()
+}
+
+// ── POPUP EXPAND ──
+function togglePopExtra(uid) {
+  const ex  = document.getElementById('ex-' + uid)
+  const btn = document.getElementById('btn-' + uid)
+  const open = ex.classList.toggle('open')
+  btn.classList.toggle('open', open)
+  btn.innerHTML = open
+    ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg> Ocultar detalhes`
+    : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg> Ver detalhes completos`
 }
 
 // ── UTILS ──

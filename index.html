@@ -1299,6 +1299,8 @@ function clearDay() {
   document.getElementById('day-badge').classList.remove('visible')
   loadRes()
 }
+
+function syncM() {
   document.querySelectorAll('.mbtn').forEach(b => {
     const m = +b.dataset.m
     b.classList.toggle('on', m===0 ? selM.length===12 : selM.includes(m))

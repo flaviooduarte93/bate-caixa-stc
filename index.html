@@ -363,6 +363,31 @@ select.fc option{background:var(--bg3);color:var(--text)}
 .mbtn:hover{border-color:var(--border2);color:var(--text)}
 .mbtn.on{background:var(--accent-glow);border-color:var(--accent);color:var(--accent);font-weight:700}
 
+/* Day filter */
+.filter-sep{height:1px;background:var(--border);margin:16px 0}
+.day-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.day-input{
+  background:var(--bg3);border:1.5px solid var(--border);color:var(--text);
+  font-family:var(--font-body);font-size:.88rem;padding:7px 12px;
+  border-radius:var(--r);min-height:36px;cursor:pointer;transition:var(--tr);
+  color-scheme:dark;
+}
+.day-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.day-clear{
+  background:transparent;border:1.5px solid var(--border);color:var(--text-muted);
+  font-family:var(--font-body);font-size:.78rem;font-weight:600;
+  padding:7px 13px;border-radius:var(--r);min-height:36px;
+  cursor:pointer;transition:var(--tr);display:none;align-items:center;gap:5px;
+}
+.day-clear.visible{display:flex}
+.day-clear:hover{border-color:var(--red);color:var(--red)}
+.day-active-badge{
+  font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;
+  background:var(--accent-glow);border:1px solid rgba(245,146,10,.4);
+  color:var(--accent);display:none;
+}
+.day-active-badge.visible{display:inline-block}
+
 .reg-section{margin-bottom:clamp(22px,4vw,38px)}
 .reg-head{display:flex;align-items:center;gap:12px;margin-bottom:clamp(12px,2.5vw,20px)}
 .reg-name{font-family:var(--font-head);font-size:clamp(.95rem,3vw,1.15rem);font-weight:800;letter-spacing:.5px;text-transform:uppercase}
@@ -801,6 +826,21 @@ select.fc option{background:var(--bg3);color:var(--text)}
           Filtrar por mês
         </div>
         <div class="month-row" id="month-row"></div>
+
+        <div class="filter-sep"></div>
+
+        <div class="filter-lbl" style="margin-bottom:10px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Filtrar por dia específico
+          <span class="day-active-badge" id="day-badge">Filtro ativo</span>
+        </div>
+        <div class="day-row">
+          <input type="date" class="day-input" id="day-input" onchange="onDayChange()">
+          <button class="day-clear" id="day-clear" onclick="clearDay()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Limpar
+          </button>
+        </div>
       </div>
 
       <!-- Goiânia -->
@@ -893,6 +933,7 @@ const MDL   = ['🥇','🥈','🥉']
 
 let mapInst = null, mapReady = false, mapFilter = 'all', mapMks = []
 let selM = [new Date().getMonth() + 1]
+let selDay = null   // 'YYYY-MM-DD' or null
 let resUnlocked = false, resFilter = 'all'
 const gpsOk = {}
 let prevSection = 'goiania'   // ← rastreia a última seção de formulário visitada
@@ -1236,7 +1277,28 @@ function buildMonths() {
     row.appendChild(b)
   })
 }
-function syncM() {
+function onDayChange() {
+  const val = document.getElementById('day-input').value  // 'YYYY-MM-DD' or ''
+  selDay = val || null
+
+  // Auto-select the matching month in the month filter
+  if (selDay) {
+    const m = new Date(selDay + 'T12:00:00').getMonth() + 1
+    if (!selM.includes(m)) { selM = [m]; syncM() }
+  }
+
+  document.getElementById('day-clear').classList.toggle('visible', !!selDay)
+  document.getElementById('day-badge').classList.toggle('visible', !!selDay)
+  loadRes()
+}
+
+function clearDay() {
+  selDay = null
+  document.getElementById('day-input').value = ''
+  document.getElementById('day-clear').classList.remove('visible')
+  document.getElementById('day-badge').classList.remove('visible')
+  loadRes()
+}
   document.querySelectorAll('.mbtn').forEach(b => {
     const m = +b.dataset.m
     b.classList.toggle('on', m===0 ? selM.length===12 : selM.includes(m))
@@ -1247,7 +1309,10 @@ async function loadRes() {
   if (!resUnlocked) return
   const { data, error } = await db.from('acoes').select('*')
   if (error) { toast('Erro ao carregar dados', 'error'); return }
-  const flt = data.filter(a => { try { return selM.includes(new Date(a.data+'T12:00:00').getMonth()+1) } catch { return false } })
+  let flt = data.filter(a => {
+    try { return selM.includes(new Date(a.data+'T12:00:00').getMonth()+1) } catch { return false }
+  })
+  if (selDay) flt = flt.filter(a => a.data === selDay)
   if (resFilter !== 'metropolitana') renderReg('g', flt.filter(a => a.regional==='goiania'))
   if (resFilter !== 'goiania')       renderReg('m', flt.filter(a => a.regional==='metropolitana'))
 }

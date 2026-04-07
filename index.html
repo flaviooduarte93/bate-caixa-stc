@@ -681,6 +681,14 @@ select.fc option{background:var(--bg3);color:var(--text)}
       </div>
     </div>
 
+    <div class="card">
+      <div class="card-title">Observações</div>
+      <div class="fg">
+        <label class="flabel" for="g-obs">Observação <span class="badge-opt">(opcional)</span></label>
+        <textarea class="fc" id="g-obs" placeholder="Descreva informações adicionais sobre a visita..." rows="3" style="resize:vertical;min-height:80px;line-height:1.5"></textarea>
+      </div>
+    </div>
+
     <button class="btn-submit" id="g-btn" onclick="sub('g')">
       <div class="spin"></div><span>Enviar Registro</span>
     </button>
@@ -788,6 +796,14 @@ select.fc option{background:var(--bg3);color:var(--text)}
           <label class="flabel" for="m-ss">Número da SS <span class="req">*</span></label>
           <input type="text" class="fc" id="m-ss" placeholder="Ex: 123456789">
         </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Observações</div>
+      <div class="fg">
+        <label class="flabel" for="m-obs">Observação <span class="badge-opt">(opcional)</span></label>
+        <textarea class="fc" id="m-obs" placeholder="Descreva informações adicionais sobre a visita..." rows="3" style="resize:vertical;min-height:80px;line-height:1.5"></textarea>
       </div>
     </div>
 
@@ -1185,6 +1201,7 @@ async function sub(p) {
   const locEl = document.getElementById(p + '-loc')
   const efR   = document.querySelector(`input[name="${p}-ef"]:checked`)
   const ss    = document.getElementById(p + '-ss').value.trim()
+  const obs   = document.getElementById(p + '-obs').value.trim()
   const f1 = document.getElementById(p + '-f1').files[0]
   const f2 = document.getElementById(p + '-f2').files[0]
   const f3 = document.getElementById(p + '-f3').files[0]
@@ -1217,7 +1234,8 @@ async function sub(p) {
       numero_ss: ef ? ss : null,
       foto_medidor: u1, foto_fachada: u2,
       foto_medicao_atual: u3,
-      outras_fotos: u4.length ? u4 : null
+      outras_fotos: u4.length ? u4 : null,
+      observacao: obs || null
     })
     if (error) throw error
     toast('✓ Registro enviado com sucesso!', 'success')
@@ -1232,6 +1250,7 @@ function resetF(p) {
   document.getElementById(p + '-pref-in').value = ''
   document.querySelectorAll(`input[name="${p}-ef"]`).forEach(r => r.checked = false)
   document.getElementById(p + '-ss').value = ''
+  document.getElementById(p + '-obs').value = ''
   document.getElementById(p + '-ssbox').style.display = 'none'
   ;['f1','f2','f3','f4'].forEach(f => { document.getElementById(p + '-' + f).value = '' })
   ;['p1','p2','p3','p4'].forEach(f => { const el = document.getElementById(p + '-' + f); if (el) el.innerHTML = '' })
@@ -1353,6 +1372,9 @@ async function loadMarkers() {
         </button>
 
         <div class="pop-extra" id="ex-${uid}">
+          ${a.observacao ? `
+            <div class="pop-k" style="margin-bottom:5px">Observação</div>
+            <div style="font-size:.82rem;color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.5">${a.observacao}</div>` : ''}
           <div class="pop-row"><span class="pop-k">Coordenadas</span></div>
           <div class="pop-coords">${coordsText}</div>
           ${fotosExtra ? `

@@ -160,22 +160,25 @@ select.fc option{background:var(--bg3);color:var(--text)}
 .pb-opt{background:var(--bg4);border:1px solid var(--border);color:var(--text-dim)}
 
 /* Photo upload — dual button (camera + gallery) */
-.photo-slot{}
+.photo-slot{margin-bottom:4px}
 .photo-btns{display:flex;gap:8px}
-.photo-btn{
+.photo-btn-label{
   flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
   background:var(--bg3);border:1.5px solid var(--border2);
   color:var(--text-muted);border-radius:var(--r);
   padding:clamp(10px,2.5vw,13px) 8px;
   font-family:var(--font-body);font-size:clamp(.78rem,1.8vw,.86rem);font-weight:600;
   cursor:pointer;transition:var(--tr);min-height:46px;
-  -webkit-tap-highlight-color:transparent;
+  position:relative;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;user-select:none;
 }
-.photo-btn:hover,.photo-btn:active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow2)}
-.photo-btn svg{flex-shrink:0;opacity:.8}
-/* hidden real inputs */
-.photo-real-input{display:none}
-/* status line */
+.photo-btn-label:hover,.photo-btn-label:active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow2)}
+.photo-btn-label svg{flex-shrink:0;opacity:.8;pointer-events:none}
+.photo-btn-label span{pointer-events:none}
+.photo-btn-label input[type="file"]{
+  position:absolute;inset:0;width:100%;height:100%;
+  opacity:0;cursor:pointer;font-size:0;
+}
 .photo-status{
   margin-top:7px;font-size:.76rem;font-weight:500;
   display:flex;align-items:center;gap:5px;min-height:18px;
@@ -631,28 +634,21 @@ select.fc option{background:var(--bg3);color:var(--text)}
 
     <div class="card">
       <div class="card-title">Registro Fotográfico</div>
-
-      <!-- Hidden real inputs -->
-      <input type="file" class="photo-real-input" id="g-f1"  accept="image/*">
-      <input type="file" class="photo-real-input" id="g-f1c" accept="image/*" capture="environment">
-      <input type="file" class="photo-real-input" id="g-f2"  accept="image/*">
-      <input type="file" class="photo-real-input" id="g-f2c" accept="image/*" capture="environment">
-      <input type="file" class="photo-real-input" id="g-f3"  accept="image/*">
-      <input type="file" class="photo-real-input" id="g-f3c" accept="image/*" capture="environment">
-      <input type="file" class="photo-real-input" id="g-f4"  accept="image/*" multiple>
-
       <div class="photo-grid">
+
         <div class="photo-slot">
           <div class="pi-label">Medidor <span class="pbadge pb-req">Obrigatório</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('g-f1c').click()">
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              Câmera
-            </button>
-            <button type="button" class="photo-btn" onclick="document.getElementById('g-f1').click()">
+              <span>Câmera</span>
+              <input type="file" accept="image/*" capture="environment" id="g-f1c" onchange="onPhoto(this,'g-f1','g-p1','g-st1')">
+            </label>
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Galeria
-            </button>
+              <span>Galeria</span>
+              <input type="file" accept="image/*" id="g-f1" onchange="onPhoto(this,'g-f1','g-p1','g-st1')">
+            </label>
           </div>
           <div class="photo-status no-file" id="g-st1"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="g-p1"></div>
@@ -661,14 +657,16 @@ select.fc option{background:var(--bg3);color:var(--text)}
         <div class="photo-slot">
           <div class="pi-label">Fachada <span class="pbadge pb-req">Obrigatório</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('g-f2c').click()">
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              Câmera
-            </button>
-            <button type="button" class="photo-btn" onclick="document.getElementById('g-f2').click()">
+              <span>Câmera</span>
+              <input type="file" accept="image/*" capture="environment" id="g-f2c" onchange="onPhoto(this,'g-f2','g-p2','g-st2')">
+            </label>
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Galeria
-            </button>
+              <span>Galeria</span>
+              <input type="file" accept="image/*" id="g-f2" onchange="onPhoto(this,'g-f2','g-p2','g-st2')">
+            </label>
           </div>
           <div class="photo-status no-file" id="g-st2"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="g-p2"></div>
@@ -677,14 +675,16 @@ select.fc option{background:var(--bg3);color:var(--text)}
         <div class="photo-slot">
           <div class="pi-label">Medição atual <span class="pbadge pb-opt">Opcional</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('g-f3c').click()">
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              Câmera
-            </button>
-            <button type="button" class="photo-btn" onclick="document.getElementById('g-f3').click()">
+              <span>Câmera</span>
+              <input type="file" accept="image/*" capture="environment" id="g-f3c" onchange="onPhoto(this,'g-f3','g-p3','g-st3')">
+            </label>
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Galeria
-            </button>
+              <span>Galeria</span>
+              <input type="file" accept="image/*" id="g-f3" onchange="onPhoto(this,'g-f3','g-p3','g-st3')">
+            </label>
           </div>
           <div class="photo-status no-file" id="g-st3"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="g-p3"></div>
@@ -693,14 +693,16 @@ select.fc option{background:var(--bg3);color:var(--text)}
         <div class="photo-slot">
           <div class="pi-label">Outras fotos <span class="pbadge pb-opt">Opcional</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('g-f4').click()">
+            <label class="photo-btn-label" style="flex:none;width:100%">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Selecionar (múltiplas)
-            </button>
+              <span>Câmera ou Galeria (múltiplas)</span>
+              <input type="file" accept="image/*" multiple id="g-f4" onchange="onPhoto(this,'g-f4','g-p4','g-st4')">
+            </label>
           </div>
           <div class="photo-status no-file" id="g-st4"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="g-p4"></div>
         </div>
+
       </div>
     </div>
 
@@ -782,28 +784,21 @@ select.fc option{background:var(--bg3);color:var(--text)}
 
     <div class="card">
       <div class="card-title">Registro Fotográfico</div>
-
-      <!-- Hidden real inputs -->
-      <input type="file" class="photo-real-input" id="m-f1"  accept="image/*">
-      <input type="file" class="photo-real-input" id="m-f1c" accept="image/*" capture="environment">
-      <input type="file" class="photo-real-input" id="m-f2"  accept="image/*">
-      <input type="file" class="photo-real-input" id="m-f2c" accept="image/*" capture="environment">
-      <input type="file" class="photo-real-input" id="m-f3"  accept="image/*">
-      <input type="file" class="photo-real-input" id="m-f3c" accept="image/*" capture="environment">
-      <input type="file" class="photo-real-input" id="m-f4"  accept="image/*" multiple>
-
       <div class="photo-grid">
+
         <div class="photo-slot">
           <div class="pi-label">Medidor <span class="pbadge pb-req">Obrigatório</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('m-f1c').click()">
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              Câmera
-            </button>
-            <button type="button" class="photo-btn" onclick="document.getElementById('m-f1').click()">
+              <span>Câmera</span>
+              <input type="file" accept="image/*" capture="environment" id="m-f1c" onchange="onPhoto(this,'m-f1','m-p1','m-st1')">
+            </label>
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Galeria
-            </button>
+              <span>Galeria</span>
+              <input type="file" accept="image/*" id="m-f1" onchange="onPhoto(this,'m-f1','m-p1','m-st1')">
+            </label>
           </div>
           <div class="photo-status no-file" id="m-st1"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="m-p1"></div>
@@ -812,14 +807,16 @@ select.fc option{background:var(--bg3);color:var(--text)}
         <div class="photo-slot">
           <div class="pi-label">Fachada <span class="pbadge pb-req">Obrigatório</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('m-f2c').click()">
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              Câmera
-            </button>
-            <button type="button" class="photo-btn" onclick="document.getElementById('m-f2').click()">
+              <span>Câmera</span>
+              <input type="file" accept="image/*" capture="environment" id="m-f2c" onchange="onPhoto(this,'m-f2','m-p2','m-st2')">
+            </label>
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Galeria
-            </button>
+              <span>Galeria</span>
+              <input type="file" accept="image/*" id="m-f2" onchange="onPhoto(this,'m-f2','m-p2','m-st2')">
+            </label>
           </div>
           <div class="photo-status no-file" id="m-st2"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="m-p2"></div>
@@ -828,14 +825,16 @@ select.fc option{background:var(--bg3);color:var(--text)}
         <div class="photo-slot">
           <div class="pi-label">Medição atual <span class="pbadge pb-opt">Opcional</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('m-f3c').click()">
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              Câmera
-            </button>
-            <button type="button" class="photo-btn" onclick="document.getElementById('m-f3').click()">
+              <span>Câmera</span>
+              <input type="file" accept="image/*" capture="environment" id="m-f3c" onchange="onPhoto(this,'m-f3','m-p3','m-st3')">
+            </label>
+            <label class="photo-btn-label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Galeria
-            </button>
+              <span>Galeria</span>
+              <input type="file" accept="image/*" id="m-f3" onchange="onPhoto(this,'m-f3','m-p3','m-st3')">
+            </label>
           </div>
           <div class="photo-status no-file" id="m-st3"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="m-p3"></div>
@@ -844,14 +843,16 @@ select.fc option{background:var(--bg3);color:var(--text)}
         <div class="photo-slot">
           <div class="pi-label">Outras fotos <span class="pbadge pb-opt">Opcional</span></div>
           <div class="photo-btns">
-            <button type="button" class="photo-btn" onclick="document.getElementById('m-f4').click()">
+            <label class="photo-btn-label" style="flex:none;width:100%">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Selecionar (múltiplas)
-            </button>
+              <span>Câmera ou Galeria (múltiplas)</span>
+              <input type="file" accept="image/*" multiple id="m-f4" onchange="onPhoto(this,'m-f4','m-p4','m-st4')">
+            </label>
           </div>
           <div class="photo-status no-file" id="m-st4"><span>Nenhuma foto selecionada</span></div>
           <div class="preview" id="m-p4"></div>
         </div>
+
       </div>
     </div>
 
@@ -1115,13 +1116,14 @@ const MESC  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov'
 const MDL   = ['🥇','🥈','🥉']
 
 let mapInst = null, mapReady = false, mapFilter = 'all', mapMks = []
-let mapDateFilter = null   // 'YYYY-MM-DD' or null
-let mapRegionFilter = 'all' // overrides password-based filter for admin
+let mapDateFilter = null
+let mapRegionFilter = 'all'
 let selM = [new Date().getMonth() + 1]
-let selDay = null   // 'YYYY-MM-DD' or null
+let selDay = null
 let resUnlocked = false, resFilter = 'all'
 const gpsOk = {}
-let prevSection = 'goiania'   // ← rastreia a última seção de formulário visitada
+let prevSection = 'goiania'
+const photoFiles = {}   // keyed by slot id e.g. 'g-f1'
 
 // ── NAVIGATION ──
 function go(name) {
@@ -1242,40 +1244,33 @@ function getGPS(p) {
 function enableML(p) { const i = document.getElementById(p + '-loc'); i.removeAttribute('readonly'); i.placeholder = 'Ex: -16.6869, -49.2648' }
 
 // ── PHOTOS ──
-// Shared file store so camera or gallery both feed the same slot
-const photoFiles = {}
+// ── PHOTO HANDLER ──
+// Called directly via onchange on each input — no JS click() needed
+// slotId: the "base" id (e.g. 'g-f1') used as key so camera & gallery share same slot
+function onPhoto(inp, slotId, previewId, statusId) {
+  if (!inp.files || !inp.files.length) return
+  photoFiles[slotId] = Array.from(inp.files)
 
-function wireP(iid, pid, stid) {
-  const inp = document.getElementById(iid)
-  if (!inp) return
-  inp.addEventListener('change', function() {
-    if (!this.files.length) return
-    // Store files under the base slot id (without 'c' suffix)
-    const slotId = iid.endsWith('c') ? iid.slice(0,-1) : iid
-    // Sync to the paired input's file store
-    photoFiles[slotId] = Array.from(this.files)
-
-    // Show preview
-    const pv = document.getElementById(pid); pv.innerHTML = ''
-    photoFiles[slotId].forEach(f => {
-      const r = new FileReader(); r.onload = e => {
-        const img = document.createElement('img'); img.src = e.target.result
-        img.className = 'thumb'
-        img.onclick = () => { const w = window.open(); w.document.write(`<img src="${e.target.result}" style="max-width:100%;max-height:100vh">`) }
-        pv.appendChild(img)
-      }; r.readAsDataURL(f)
-    })
-
-    // Update status line
-    if (stid) {
-      const st = document.getElementById(stid)
-      if (st) {
-        const n = photoFiles[slotId].length
-        st.className = 'photo-status has-file'
-        st.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ${n} foto${n>1?'s':''} selecionada${n>1?'s':''}`
-      }
+  // Preview
+  const pv = document.getElementById(previewId); pv.innerHTML = ''
+  photoFiles[slotId].forEach(f => {
+    const r = new FileReader()
+    r.onload = e => {
+      const img = document.createElement('img')
+      img.src = e.target.result; img.className = 'thumb'
+      img.onclick = () => { const w = window.open(); w.document.write(`<img src="${e.target.result}" style="max-width:100%;max-height:100vh">`) }
+      pv.appendChild(img)
     }
+    r.readAsDataURL(f)
   })
+
+  // Status
+  const st = document.getElementById(statusId)
+  if (st) {
+    const n = photoFiles[slotId].length
+    st.className = 'photo-status has-file'
+    st.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ${n} foto${n>1?'s':''} selecionada${n>1?'s':''}`
+  }
 }
 
 // ── UPLOAD ──
@@ -1714,14 +1709,6 @@ function toast(msg, type) {
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
   buildForm('g'); buildForm('m')
-  ;[['g-f1','g-p1','g-st1'],['g-f1c','g-p1','g-st1'],
-    ['g-f2','g-p2','g-st2'],['g-f2c','g-p2','g-st2'],
-    ['g-f3','g-p3','g-st3'],['g-f3c','g-p3','g-st3'],
-    ['g-f4','g-p4','g-st4'],
-    ['m-f1','m-p1','m-st1'],['m-f1c','m-p1','m-st1'],
-    ['m-f2','m-p2','m-st2'],['m-f2c','m-p2','m-st2'],
-    ['m-f3','m-p3','m-st3'],['m-f3c','m-p3','m-st3'],
-    ['m-f4','m-p4','m-st4']].forEach(([i,p,s]) => wireP(i,p,s))
   buildMonths(); getGPS('g')
   document.getElementById('map-pw-in').addEventListener('keydown', e => { if(e.key==='Enter') authMap() })
   document.getElementById('res-pw-in').addEventListener('keydown', e => { if(e.key==='Enter') authRes() })

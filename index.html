@@ -532,6 +532,48 @@ select.fc option{background:var(--bg3);color:var(--text)}
 .assert-mid{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:var(--yellow)}
 .assert-lo{ background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4); color:var(--red)}
 
+/* OFFLINE INDICATOR */
+.offline-bar{
+  position:fixed;top:var(--nav);left:0;right:0;z-index:999;
+  background:#7c3aed;color:#fff;
+  font-size:.78rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:7px 16px;
+  display:none;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 2px 12px rgba(0,0,0,.4);
+}
+.offline-bar.show{display:flex}
+.offline-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pdot 1.2s ease-in-out infinite}
+
+/* Pending badge on nav */
+.pending-badge{
+  display:none;background:var(--accent);color:#fff;
+  font-size:.6rem;font-weight:800;
+  padding:1px 5px;border-radius:10px;margin-left:4px;
+  vertical-align:middle;
+}
+.pending-badge.show{display:inline-block}
+
+/* Pending queue panel */
+.pending-panel{
+  background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.35);
+  border-radius:var(--rl);padding:14px 16px;margin-bottom:14px;
+}
+.pending-panel-title{
+  font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:#a78bfa;margin-bottom:10px;display:flex;align-items:center;gap:7px;
+}
+.pending-item{
+  font-size:.82rem;color:var(--text2);padding:6px 0;
+  border-bottom:1px solid var(--border);display:flex;justify-content:space-between;
+}
+.pending-item:last-child{border-bottom:none}
+.pending-sync-btn{
+  background:var(--grad-btn);color:#fff;border:none;border-radius:var(--r);
+  font-family:var(--font-head);font-size:.78rem;font-weight:700;letter-spacing:.5px;
+  padding:8px 14px;cursor:pointer;margin-top:10px;transition:var(--tr);
+}
+.pending-sync-btn:hover{filter:brightness(1.1)}
+
 /* TOAST */
 .toast{
   position:fixed;bottom:clamp(16px,4vw,24px);left:50%;
@@ -593,6 +635,12 @@ select.fc option{background:var(--bg3);color:var(--text)}
     <button class="nav-btn"        data-nav="resumo"         onclick="go('resumo')">Resumo</button>
   </div>
 </nav>
+
+<!-- Offline banner -->
+<div class="offline-bar" id="offline-bar">
+  <span class="offline-dot"></span>
+  Sem conexão — registros serão salvos localmente e enviados quando houver internet
+</div>
 
 <!-- ── GOIÂNIA ── -->
 <div class="section active" id="sec-goiania">
@@ -737,6 +785,7 @@ select.fc option{background:var(--bg3);color:var(--text)}
       </div>
     </div>
 
+    <div id="g-pending-panel" class="pending-panel" style="display:none"></div>
     <button class="btn-submit" id="g-btn" onclick="sub('g')">
       <div class="spin"></div><span>Enviar Registro</span>
     </button>
@@ -887,6 +936,7 @@ select.fc option{background:var(--bg3);color:var(--text)}
       </div>
     </div>
 
+    <div id="m-pending-panel" class="pending-panel" style="display:none"></div>
     <button class="btn-submit" id="m-btn" onclick="sub('m')">
       <div class="spin"></div><span>Enviar Registro</span>
     </button>
@@ -1313,6 +1363,28 @@ async function sub(p) {
   if (ef && !ss)    return showM(msg, 'Informe o número da SS', 'error')
 
   btn.disabled = true; btn.classList.add('loading')
+
+  // ── OFFLINE: save to IndexedDB ──
+  if (!navigator.onLine) {
+    try {
+      let lat = null, lng = null
+      if (locEl.dataset.lat) { lat = +locEl.dataset.lat; lng = +locEl.dataset.lng }
+      else { const pts = locEl.value.split(','); if (pts.length === 2) { lat = +pts[0].trim(); lng = +pts[1].trim() } }
+
+      await saveOffline(p, {
+        regional: rn, prefixo: pref,
+        data: document.getElementById(p + '-data').value,
+        lat, lng, origem: orig, efetividade: ef,
+        numero_ss: ef ? ss : null, observacao: obs || null
+      }, { f1: f1 ? [f1] : [], f2: f2 ? [f2] : [], f3: f3 ? [f3] : [], f4 })
+
+      resetF(p); showM(msg, '', '')
+    } catch(err) { showM(msg, 'Erro ao salvar offline: ' + err.message, 'error') }
+    finally { btn.disabled = false; btn.classList.remove('loading') }
+    return
+  }
+
+  // ── ONLINE: normal flow ──
   showM(msg, 'Enviando fotos...', '')
   try {
     const u1 = await upload(f1, rn + '/medidor')
@@ -1706,12 +1778,191 @@ function toast(msg, type) {
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3500)
 }
 
+// ── SERVICE WORKER REGISTRATION ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {})
+  })
+}
+
+// ── INDEXEDDB ──
+const IDB_NAME = 'bate-caixa-offline', IDB_STORE = 'pending', IDB_VER = 1
+let idb = null
+
+function openIDB() {
+  return new Promise((res, rej) => {
+    if (idb) return res(idb)
+    const req = indexedDB.open(IDB_NAME, IDB_VER)
+    req.onupgradeneeded = e => {
+      const db = e.target.result
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: 'id', autoIncrement: true })
+      }
+    }
+    req.onsuccess  = e => { idb = e.target.result; res(idb) }
+    req.onerror    = e => rej(e.target.error)
+  })
+}
+
+async function idbAdd(record) {
+  const db = await openIDB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite')
+    const req = tx.objectStore(IDB_STORE).add(record)
+    req.onsuccess = () => res(req.result)
+    req.onerror   = e => rej(e.target.error)
+  })
+}
+
+async function idbGetAll() {
+  const db = await openIDB()
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(IDB_STORE, 'readonly')
+    const req = tx.objectStore(IDB_STORE).getAll()
+    req.onsuccess = () => res(req.result)
+    req.onerror   = e => rej(e.target.error)
+  })
+}
+
+async function idbDelete(id) {
+  const db = await openIDB()
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(IDB_STORE, 'readwrite')
+    const req = tx.objectStore(IDB_STORE).delete(id)
+    req.onsuccess = () => res()
+    req.onerror   = e => rej(e.target.error)
+  })
+}
+
+// ── FILE TO BASE64 ──
+function fileToB64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader()
+    r.onload  = e => res(e.target.result) // data:image/jpeg;base64,...
+    r.onerror = rej
+    r.readAsDataURL(file)
+  })
+}
+
+// ── ONLINE / OFFLINE DETECTION ──
+function updateOnlineUI() {
+  const bar = document.getElementById('offline-bar')
+  if (navigator.onLine) {
+    bar.classList.remove('show')
+  } else {
+    bar.classList.add('show')
+    // Adjust section padding when bar is visible
+  }
+}
+window.addEventListener('online',  () => { updateOnlineUI(); syncPending() })
+window.addEventListener('offline', () => { updateOnlineUI(); refreshPendingPanels() })
+
+// ── OFFLINE SUBMIT: save to IndexedDB ──
+async function saveOffline(p, payload, files) {
+  // Convert all files to base64 for offline storage
+  const b64Files = {}
+  for (const [key, fileArr] of Object.entries(files)) {
+    if (!fileArr || !fileArr.length) continue
+    b64Files[key] = []
+    for (const f of fileArr) {
+      b64Files[key].push({ name: f.name, type: f.type, data: await fileToB64(f) })
+    }
+  }
+  const record = { ...payload, b64Files, savedAt: new Date().toISOString() }
+  await idbAdd(record)
+  await refreshPendingPanels()
+  toast(`📥 Salvo offline! Será enviado quando houver conexão.`, 'success')
+}
+
+// ── SYNC PENDING RECORDS ──
+async function syncPending() {
+  const pending = await idbGetAll()
+  if (!pending.length) return
+
+  let synced = 0, failed = 0
+  for (const rec of pending) {
+    try {
+      // Re-upload photos from base64
+      async function b64ToFile(b64obj) {
+        const res  = await fetch(b64obj.data)
+        const blob = await res.blob()
+        return new File([blob], b64obj.name, { type: b64obj.type })
+      }
+
+      let urlMed = null, urlFac = null, urlMed2 = null
+      const urlsOutras = []
+      const rn = rec.regional
+
+      if (rec.b64Files['f1']?.[0]) urlMed  = await upload(await b64ToFile(rec.b64Files['f1'][0]), rn+'/medidor')
+      if (rec.b64Files['f2']?.[0]) urlFac  = await upload(await b64ToFile(rec.b64Files['f2'][0]), rn+'/fachada')
+      if (rec.b64Files['f3']?.[0]) urlMed2 = await upload(await b64ToFile(rec.b64Files['f3'][0]), rn+'/medicao')
+      if (rec.b64Files['f4']?.length) {
+        for (const fb of rec.b64Files['f4']) urlsOutras.push(await upload(await b64ToFile(fb), rn+'/outras'))
+      }
+
+      const { error } = await db.from('acoes').insert({
+        regional: rn, prefixo: rec.prefixo, data: rec.data,
+        latitude: rec.lat, longitude: rec.lng,
+        origem: rec.origem, efetividade: rec.efetividade,
+        numero_ss: rec.numero_ss || null,
+        foto_medidor: urlMed, foto_fachada: urlFac,
+        foto_medicao_atual: urlMed2,
+        outras_fotos: urlsOutras.length ? urlsOutras : null,
+        observacao: rec.observacao || null
+      })
+      if (error) throw error
+
+      await idbDelete(rec.id)
+      synced++
+    } catch { failed++ }
+  }
+
+  await refreshPendingPanels()
+  if (synced > 0) toast(`✓ ${synced} registro${synced>1?'s':''} sincronizado${synced>1?'s':''}!`, 'success')
+  if (failed  > 0) toast(`⚠ ${failed} registro${failed>1?'s':''} não sincronizado${failed>1?'s':''}`, 'error')
+}
+
+// ── REFRESH PENDING PANELS ──
+async function refreshPendingPanels() {
+  const all = await idbGetAll()
+  ;['g','m'].forEach(p => {
+    const rn    = p === 'g' ? 'goiania' : 'metropolitana'
+    const mine  = all.filter(r => r.regional === rn)
+    const panel = document.getElementById(p + '-pending-panel')
+    if (!panel) return
+    if (mine.length === 0) { panel.style.display = 'none'; return }
+    panel.style.display = 'block'
+    panel.innerHTML = `
+      <div class="pending-panel-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10"/><polyline points="12 6 12 12 15 15"/><path d="M22 12c0 5.52-4.48 10-10 10"/></svg>
+        ${mine.length} registro${mine.length>1?'s':''} pendente${mine.length>1?'s':''} de envio
+      </div>
+      ${mine.map(r => `
+        <div class="pending-item">
+          <span>${r.prefixo} — ${r.origem}</span>
+          <span style="color:var(--text-muted);font-size:.75rem">${new Date(r.savedAt).toLocaleString('pt-BR')}</span>
+        </div>`).join('')}
+      ${navigator.onLine
+        ? `<button class="pending-sync-btn" onclick="syncPending()">↑ Sincronizar agora</button>`
+        : `<div style="font-size:.75rem;color:#a78bfa;margin-top:8px">Aguardando conexão para sincronizar...</div>`
+      }`
+  })
+}
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
   buildForm('g'); buildForm('m')
   buildMonths(); getGPS('g')
   document.getElementById('map-pw-in').addEventListener('keydown', e => { if(e.key==='Enter') authMap() })
   document.getElementById('res-pw-in').addEventListener('keydown', e => { if(e.key==='Enter') authRes() })
+
+  // Offline init
+  updateOnlineUI()
+  openIDB().then(() => {
+    refreshPendingPanels()
+    // Try to sync any pending records if we're online
+    if (navigator.onLine) syncPending()
+  }).catch(() => {})
 })
 </script>
 </body>

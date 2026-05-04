@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════
-// BATE CAIXA — Service Worker
+// BATE CAIXA — Service Worker v2
 // ═══════════════════════════════════════════
-const CACHE = 'bate-caixa-v1'
+const CACHE = 'bate-caixa-v2'
 
 const PRECACHE = [
   './',
@@ -12,11 +12,17 @@ const PRECACHE = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ]
 
+// Domínios que nunca devem ser interceptados (sempre vão direto à rede)
+const BYPASS = [
+  'supabase.co',          // banco de dados e auth
+  'api.cloudinary.com',   // upload de fotos
+  'res.cloudinary.com',   // entrega de fotos
+]
+
 // ── INSTALL: cache essentials ──
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => {
-      // Cache what we can; ignore failures on external CDNs
       return Promise.allSettled(PRECACHE.map(url => c.add(url).catch(() => {})))
     }).then(() => self.skipWaiting())
   )
@@ -31,17 +37,21 @@ self.addEventListener('activate', e => {
   )
 })
 
-// ── FETCH: serve from cache, fallback to network ──
+// ── FETCH ──
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url)
 
-  // Skip non-GET and Supabase API calls (always need network for data)
+  // Deixar passar sem interceptar: métodos não-GET e domínios da lista BYPASS
   if (e.request.method !== 'GET') return
-  if (url.hostname.includes('supabase.co')) return
+  if (BYPASS.some(domain => url.hostname.includes(domain))) return
 
-  // Map tiles: cache-first with network fallback
-  if (url.hostname.includes('carto.com') || url.hostname.includes('cartocdn.com') ||
-      url.hostname.includes('tile.openstreetmap') || url.hostname.includes('basemaps')) {
+  // Map tiles: cache-first (funcionam offline depois da primeira visita)
+  if (
+    url.hostname.includes('carto.com') ||
+    url.hostname.includes('cartocdn.com') ||
+    url.hostname.includes('tile.openstreetmap') ||
+    url.hostname.includes('basemaps')
+  ) {
     e.respondWith(
       caches.open(CACHE).then(async c => {
         const cached = await c.match(e.request)
@@ -58,7 +68,7 @@ self.addEventListener('fetch', e => {
     return
   }
 
-  // Everything else: network-first, cache fallback
+  // Tudo o mais: network-first, cache como fallback offline
   e.respondWith(
     fetch(e.request)
       .then(resp => {
@@ -68,6 +78,8 @@ self.addEventListener('fetch', e => {
         }
         return resp
       })
-      .catch(() => caches.match(e.request).then(r => r || new Response('Offline', { status: 503 })))
+      .catch(() =>
+        caches.match(e.request).then(r => r || new Response('Offline', { status: 503 }))
+      )
   )
 })
